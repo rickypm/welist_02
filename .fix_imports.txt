@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Fix Flutter imports with space issue
+find lib -name "*.dart" -exec sed -i 's/package:flutter\/material\.  dart/package:flutter\/material.dart/g' {} +
+find lib -name "*.dart" -exec sed -i 's/package:  provider\/provider. dart/package: provider\/provider.dart/g' {} +
+find lib -name "*.dart" -exec sed -i 's/package:  http\/http.dart/package:http\/http.dart/g' {} +
+
+# Fix flutter_lints in analysis_options.yaml
+sed -i 's/package:flutter_lints\/flutter\. yaml/package:flutter_lints\/flutter.yaml/g' analysis_options.yaml
