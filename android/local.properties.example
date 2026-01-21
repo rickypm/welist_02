@@ -1,8 +1,0 @@
-## This file is NOT checked into version control.
-## Copy this to local.properties and fill in your paths. 
-
-sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk
-flutter.sdk=/Users/YOUR_USERNAME/development/flutter
-flutter.buildMode=debug
-flutter.versionName=1.0.0
-flutter.versionCode=1

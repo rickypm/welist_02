@@ -6,17 +6,18 @@ import '../models/conversation_model.dart';
 
 class RealtimeService {
   final SupabaseClient _supabase = Supabase.instance.client;
-  
+
   final Map<String, RealtimeChannel> _channels = {};
   final Map<String, StreamController> _streamControllers = {};
 
   /// Subscribe to messages in a conversation
   Stream<List<MessageModel>> subscribeToMessages(String conversationId) {
-    final channelKey = 'messages: $conversationId';
-    
-    if (!_streamControllers.containsKey(channelKey)) {
-      _streamControllers[channelKey] = StreamController<List<MessageModel>>.broadcast();
-    }
+    final channelKey = 'messages:$conversationId';
+
+    _streamControllers.putIfAbsent(
+      channelKey,
+      () => StreamController<List<MessageModel>>.broadcast(),
+    );
 
     if (!_channels.containsKey(channelKey)) {
       final channel = _supabase
@@ -31,7 +32,7 @@ class RealtimeService {
               value: conversationId,
             ),
             callback: (payload) {
-              _handleMessageInsert(conversationId, payload. newRecord);
+              _handleMessageInsert(conversationId, payload.newRecord);
             },
           )
           .subscribe();
@@ -48,7 +49,7 @@ class RealtimeService {
   ) async {
     try {
       final channelKey = 'messages:$conversationId';
-      
+
       final data = await _supabase
           .from('messages')
           .select('*')
@@ -72,11 +73,12 @@ class RealtimeService {
     String odId, {
     bool isPartner = false,
   }) {
-    final channelKey = 'conversations:$odId: $isPartner';
+    final channelKey = 'conversations:$odId:$isPartner';
 
-    if (!_streamControllers. containsKey(channelKey)) {
-      _streamControllers[channelKey] = StreamController<List<ConversationModel>>. broadcast();
-    }
+    _streamControllers.putIfAbsent(
+      channelKey,
+      () => StreamController<List<ConversationModel>>.broadcast(),
+    );
 
     if (!_channels.containsKey(channelKey)) {
       final channel = _supabase
@@ -85,7 +87,7 @@ class RealtimeService {
             event: PostgresChangeEvent.all,
             schema: 'public',
             table: 'conversations',
-            callback: (payload) {
+            callback: (_) {
               _handleConversationChange(odId, isPartner);
             },
           )
@@ -100,7 +102,7 @@ class RealtimeService {
   Future<void> _handleConversationChange(String odId, bool isPartner) async {
     try {
       final channelKey = 'conversations:$odId:$isPartner';
-      
+
       String query;
       if (isPartner) {
         final professional = await _supabase
@@ -108,9 +110,9 @@ class RealtimeService {
             .select('id')
             .eq('user_id', odId)
             .maybeSingle();
-        
+
         if (professional == null) return;
-        query = 'professional_id. eq.${professional['id']}';
+        query = 'professional_id.eq.${professional['id']}';
       } else {
         query = 'user_id.eq.$odId';
       }
@@ -137,32 +139,23 @@ class RealtimeService {
   Stream<Map<String, bool>> subscribeToPresence(List<String> userIds) {
     final channelKey = 'presence:${userIds.join(',')}';
 
-    if (!_streamControllers. containsKey(channelKey)) {
-      _streamControllers[channelKey] = StreamController<Map<String, bool>>.broadcast();
-    }
+    _streamControllers.putIfAbsent(
+      channelKey,
+      () => StreamController<Map<String, bool>>.broadcast(),
+    );
 
     if (!_channels.containsKey(channelKey)) {
-      final channel = _supabase. channel(channelKey);
+      final channel = _supabase.channel(channelKey);
 
-      channel.onPresenceSync((_) {
-        final presenceMap = <String, bool>{};
-        
-        for (final userId in userIds) {
-          presenceMap[userId] = false;
-        }
-        
+      channel.onPresenceSync((payload) {
+        final presenceMap = {for (final id in userIds) id: false};
+
         try {
-          final presenceState = channel.presenceState();
-          
-          for (final key in presenceState.keys) {
-            final presences = presenceState[key];
-            if (presences != null) {
-              for (final presence in presences) {
-                final userId = presence.payload['user_id'] as String? ;
-                if (userId != null && presenceMap. containsKey(userId)) {
-                  presenceMap[userId] = true;
-                }
-              }
+          final state = channel.presenceState(); // List<Presence> / List<SinglePresenceState>
+          for (final presence in state) {
+            final userId = presence.payload['user_id'] as String?;
+            if (userId != null && presenceMap.containsKey(userId)) {
+              presenceMap[userId] = true;
             }
           }
         } catch (e) {
@@ -185,7 +178,7 @@ class RealtimeService {
   Future<void> trackPresence(String odId) async {
     try {
       final channel = _supabase.channel('presence:tracking');
-      
+      channel.subscribe(); // subscribe before track
       await channel.track({
         'user_id': odId,
         'online_at': DateTime.now().toIso8601String(),
@@ -196,22 +189,18 @@ class RealtimeService {
   }
 
   void unsubscribe(String channelKey) {
-    if (_channels.containsKey(channelKey)) {
-      _channels[channelKey]! .unsubscribe();
-      _channels.remove(channelKey);
-    }
+    _channels[channelKey]?.unsubscribe();
+    _channels.remove(channelKey);
 
-    if (_streamControllers.containsKey(channelKey)) {
-      _streamControllers[channelKey]!.close();
-      _streamControllers.remove(channelKey);
-    }
+    _streamControllers[channelKey]?.close();
+    _streamControllers.remove(channelKey);
   }
 
   void unsubscribeAll() {
     for (final channel in _channels.values) {
       channel.unsubscribe();
     }
-    _channels. clear();
+    _channels.clear();
 
     for (final controller in _streamControllers.values) {
       controller.close();

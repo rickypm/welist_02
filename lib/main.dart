@@ -5,10 +5,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/app_config.dart';
 import 'config/theme.dart';
+import 'config/routes.dart'; // Added this import
 import 'providers/auth_provider.dart';
 import 'providers/data_provider.dart';
 import 'services/cache_service.dart';
-import 'screens/splash_screen.dart';
+// import 'screens/splash_screen.dart'; // No longer needed as home because we use initialRoute
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,14 +17,14 @@ void main() async {
   // Set system UI style
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness. light,
+    statusBarIconBrightness: Brightness.light,
     statusBarBrightness: Brightness.dark,
     systemNavigationBarColor: AppColors.background,
-    systemNavigationBarIconBrightness: Brightness. light,
+    systemNavigationBarIconBrightness: Brightness.light,
   ));
 
   // Set preferred orientations
-  await SystemChrome. setPreferredOrientations([
+  await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
@@ -37,7 +38,7 @@ void main() async {
 Future<void> _initializeServices() async {
   // Initialize Supabase
   await Supabase.initialize(
-    url: AppConfig. supabaseUrl,
+    url: AppConfig.supabaseUrl,
     anonKey: AppConfig.supabaseAnonKey,
   );
 
@@ -59,7 +60,9 @@ class WeListApp extends StatelessWidget {
         title: AppConfig.appName,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.darkTheme,
-        home: const SplashScreen(),
+        // FIXED: Added route generator so named routes like '/signup' work
+        initialRoute: AppRoutes.splash,
+        onGenerateRoute: AppRoutes.generateRoute,
       ),
     );
   }

@@ -139,7 +139,7 @@ class StorageService {
       final extension = path.extension(file.path);
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = 'image_$timestamp$extension';
-      final filePath = '$folderPath/$fileName';
+      // FIXED: Removed unused filePath variable
 
       // Extract bucket from folder path (first segment)
       final pathParts = folderPath.split('/');

@@ -34,7 +34,7 @@ class _PartnerInboxScreenState extends State<PartnerInboxScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
+    // FIXED: Removed unused authProvider variable
     final dataProvider = context.watch<DataProvider>();
     final professional = dataProvider.selectedProfessional;
     final canReadMessages = _canReadMessages(professional);

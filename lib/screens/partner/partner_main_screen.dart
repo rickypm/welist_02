@@ -19,12 +19,9 @@ class PartnerMainScreen extends StatefulWidget {
 class _PartnerMainScreenState extends State<PartnerMainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const PartnerHomeScreen(),
-    const PartnerShopScreen(),
-    const PartnerInboxScreen(),
-    const ProfileScreen(isPartner: true),
-  ];
+  void _switchTab(int index) {
+    setState(() => _currentIndex = index);
+  }
 
   @override
   void initState() {
@@ -37,42 +34,50 @@ class _PartnerMainScreenState extends State<PartnerMainScreen> {
     final dataProvider = context.read<DataProvider>();
 
     if (authProvider.user != null) {
-      await dataProvider.loadProfessionalByUserId(authProvider.user! .id);
+      await dataProvider.loadProfessionalByUserId(authProvider.user!.id);
       
       if (dataProvider.selectedProfessional != null) {
         await dataProvider.loadPartnerShop(dataProvider.selectedProfessional!.id);
         await dataProvider.loadPartnerStats(authProvider.user!.id);
-        await dataProvider.loadConversations(authProvider.user! .id, isPartner: true);
+        await dataProvider.loadConversations(authProvider.user!.id, isPartner: true);
         
         if (dataProvider.shop != null) {
           await dataProvider.loadShopItems(dataProvider.shop!.id);
         }
       }
-      
       await dataProvider.loadCategories();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Pass the switchTab callback to PartnerHomeScreen
+    final List<Widget> screens = [
+      PartnerHomeScreen(onSwitchTab: _switchTab), // Pass callback here
+      const PartnerShopScreen(),
+      const PartnerInboxScreen(),
+      const ProfileScreen(isPartner: true),
+    ];
+
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: IndexedStack(
         index: _currentIndex,
-        children: _screens,
+        children: screens,
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.1),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
           ],
         ),
         child: SafeArea(
-          child:  Padding(
+          child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -84,15 +89,15 @@ class _PartnerMainScreenState extends State<PartnerMainScreen> {
                   label: 'Dashboard',
                 ),
                 _buildNavItem(
-                  index:  1,
-                  icon:  Iconsax.shop,
+                  index: 1,
+                  icon: Iconsax.shop,
                   activeIcon: Iconsax.shop,
                   label: 'My Shop',
                 ),
                 _buildNavItem(
                   index: 2,
                   icon: Iconsax.message,
-                  activeIcon:  Iconsax.message,
+                  activeIcon: Iconsax.message,
                   label: 'Inbox',
                   showBadge: _getUnreadCount() > 0,
                   badgeCount: _getUnreadCount(),
@@ -100,7 +105,7 @@ class _PartnerMainScreenState extends State<PartnerMainScreen> {
                 _buildNavItem(
                   index: 3,
                   icon: Iconsax.user,
-                  activeIcon: Iconsax. user,
+                  activeIcon: Iconsax.user,
                   label: 'Profile',
                 ),
               ],
@@ -112,12 +117,17 @@ class _PartnerMainScreenState extends State<PartnerMainScreen> {
   }
 
   int _getUnreadCount() {
-    final dataProvider = context.watch<DataProvider>();
-    int count = 0;
-    for (final conv in dataProvider.conversations) {
-      count += conv.professionalUnreadCount;
+    // Safely get unread count
+    try {
+      final dataProvider = context.watch<DataProvider>();
+      int count = 0;
+      for (final conv in dataProvider.conversations) {
+        count += conv.professionalUnreadCount;
+      }
+      return count;
+    } catch (e) {
+      return 0;
     }
-    return count;
   }
 
   Widget _buildNavItem({
@@ -132,7 +142,7 @@ class _PartnerMainScreenState extends State<PartnerMainScreen> {
 
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
-      behavior: HitTestBehavior. opaque,
+      behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Column(
@@ -153,17 +163,17 @@ class _PartnerMainScreenState extends State<PartnerMainScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: const BoxDecoration(
-                        color:  AppColors.error,
+                        color: AppColors.error,
                         shape: BoxShape.circle,
                       ),
-                      constraints:  const BoxConstraints(
+                      constraints: const BoxConstraints(
                         minWidth: 16,
                         minHeight: 16,
                       ),
                       child: Text(
                         badgeCount > 9 ? '9+' : badgeCount.toString(),
                         style: const TextStyle(
-                          color: AppColors.white,
+                          color: Colors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
@@ -178,7 +188,7 @@ class _PartnerMainScreenState extends State<PartnerMainScreen> {
               label,
               style: TextStyle(
                 fontSize: 11,
-                fontWeight: isSelected ? FontWeight. w600 : FontWeight.normal,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 color: isSelected ? AppColors.primary : AppColors.textMuted,
               ),
             ),

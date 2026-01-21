@@ -8,9 +8,15 @@ import '../../providers/data_provider.dart';
 import '../../widgets/common/avatar_widget.dart';
 import '../../widgets/common/shimmer_loading.dart';
 import '../subscription/subscription_screen.dart';
+import '../partner/item_editor_screen.dart'; // Ensure this import exists
 
 class PartnerHomeScreen extends StatefulWidget {
-  const PartnerHomeScreen({super.key});
+  final Function(int) onSwitchTab; // Callback to switch tabs
+
+  const PartnerHomeScreen({
+    super.key, 
+    required this.onSwitchTab,
+  });
 
   @override
   State<PartnerHomeScreen> createState() => _PartnerHomeScreenState();
@@ -28,7 +34,7 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
     final dataProvider = context.read<DataProvider>();
 
     if (authProvider.user != null) {
-      await dataProvider.loadPartnerStats(authProvider.user! .id);
+      await dataProvider.loadPartnerStats(authProvider.user!.id);
     }
   }
 
@@ -41,6 +47,7 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
     final stats = dataProvider.partnerStats;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadData,
@@ -56,18 +63,19 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
                   children: [
                     Expanded(
                       child: Column(
-                        crossAxisAlignment:  CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Welcome back!  👋',
-                            style:  Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            'Welcome back! 👋',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             professional?.displayName ?? user?.name ?? 'Partner',
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 14,
                             ),
@@ -79,7 +87,7 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
                       imageUrl: professional?.avatarUrl ?? user?.avatarUrl,
                       name: professional?.displayName ?? user?.name,
                       size: 48,
-                      isVerified: professional?.isVerified ??  false,
+                      isVerified: professional?.isVerified ?? false,
                       showBorder: true,
                     ),
                   ],
@@ -95,6 +103,7 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
                   'Performance',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -131,7 +140,7 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
                       _buildStatCard(
                         icon: Iconsax.notification,
                         title: 'Unread Messages',
-                        value:  '${stats['unread'] ??  0}',
+                        value: '${stats['unread'] ?? 0}',
                         color: AppColors.warning,
                       ),
                     ],
@@ -143,6 +152,7 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
                   'Quick Actions',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -155,18 +165,34 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
                         title: 'Manage Shop',
                         color: AppColors.primary,
                         onTap: () {
-                          // Navigate to shop tab
+                          // Switch to Shop Tab (Index 1)
+                          widget.onSwitchTab(1);
                         },
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildQuickAction(
-                        icon:  Iconsax.box_add,
+                        icon: Iconsax.box_add,
                         title: 'Add Service',
                         color: AppColors.accent,
-                        onTap:  () {
-                          // Navigate to add item
+                        onTap: () {
+                          if (dataProvider.shop != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ItemEditorScreen(
+                                  shopId: dataProvider.shop!.id,
+                                ),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please create a shop first!')),
+                            );
+                            // Optionally switch to shop tab to create one
+                            widget.onSwitchTab(1); 
+                          }
                         },
                       ),
                     ),
@@ -174,24 +200,25 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
                 ),
                 const SizedBox(height: 12),
                 Row(
-                  children:  [
+                  children: [
                     Expanded(
                       child: _buildQuickAction(
-                        icon:  Iconsax.message,
+                        icon: Iconsax.message,
                         title: 'Messages',
                         color: AppColors.info,
-                        onTap:  () {
-                          // Navigate to inbox
+                        onTap: () {
+                          // Switch to Inbox Tab (Index 2)
+                          widget.onSwitchTab(2);
                         },
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildQuickAction(
-                        icon:  Iconsax.crown,
+                        icon: Iconsax.crown,
                         title: 'Upgrade Plan',
                         color: AppColors.warning,
-                        onTap:  () {
+                        onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -221,17 +248,17 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
     final isFreePlan = plan == 'free';
 
     return Container(
-      padding:  const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: isFreePlan
             ? LinearGradient(
                 colors: [
-                  AppColors.warning.withValues(alpha: 0.2),
-                  AppColors.warning.withValues(alpha: 0.1),
+                  AppColors.warning.withOpacity(0.2),
+                  AppColors.warning.withOpacity(0.1),
                 ],
               )
             : AppColors.primaryGradient,
-        borderRadius:  BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
@@ -240,13 +267,13 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
             height: 48,
             decoration: BoxDecoration(
               color: isFreePlan
-                  ? AppColors.warning.withValues(alpha: 0.2)
-                  : AppColors.white.withValues(alpha: 0.2),
+                  ? AppColors.warning.withOpacity(0.2)
+                  : Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              isFreePlan ?  Iconsax.crown : Iconsax.medal_star,
-              color: isFreePlan ? AppColors.warning :  AppColors.white,
+              isFreePlan ? Iconsax.crown : Iconsax.medal_star,
+              color: isFreePlan ? AppColors.warning : Colors.white,
             ),
           ),
           const SizedBox(width: 16),
@@ -259,7 +286,7 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: isFreePlan ? AppColors.warning : AppColors.white,
+                    color: isFreePlan ? AppColors.warning : Colors.white,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -270,8 +297,8 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     color: isFreePlan
-                        ? AppColors.warning.withValues(alpha: 0.8)
-                        : AppColors.white.withValues(alpha: 0.8),
+                        ? AppColors.warning.withOpacity(0.8)
+                        : Colors.white.withOpacity(0.8),
                   ),
                 ),
               ],
@@ -289,8 +316,8 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
               },
               style: TextButton.styleFrom(
                 backgroundColor: AppColors.warning,
-                foregroundColor: AppColors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical:  8),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
               child: const Text('Upgrade'),
             ),
@@ -315,15 +342,15 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children:  [
+        children: [
           Container(
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child:  Icon(icon, color: color, size: 18),
+            child: Icon(icon, color: color, size: 18),
           ),
           const SizedBox(height: 8),
           Text(
@@ -336,8 +363,8 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
           ),
           Text(
             title,
-            style: TextStyle(
-              fontSize:  11,
+            style: const TextStyle(
+              fontSize: 11,
               color: AppColors.textMuted,
             ),
             maxLines: 1,
@@ -359,9 +386,9 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
+          color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Row(
           children: [
@@ -370,7 +397,7 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
             Expanded(
               child: Text(
                 title,
-                style:  TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: color,
                   fontSize: 13,
@@ -385,7 +412,7 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
 
   Widget _buildTipsSection() {
     return Container(
-      padding:  const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
@@ -395,12 +422,13 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
         children: [
           Row(
             children: [
-              Icon(Iconsax.lamp_on, color: AppColors.warning, size: 20),
+              const Icon(Iconsax.lamp_on, color: AppColors.warning, size: 20),
               const SizedBox(width: 8),
               Text(
                 'Tips to Get More Customers',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
@@ -422,12 +450,12 @@ class _PartnerHomeScreenState extends State<PartnerHomeScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Iconsax.tick_circle, size: 16, color: AppColors.success),
+          const Icon(Iconsax.tick_circle, size: 16, color: AppColors.success),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
-              style:  TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
               ),

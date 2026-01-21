@@ -215,13 +215,20 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     itemCount: professionals.length,
                     itemBuilder: (context, index) {
                       final professional = professionals[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: ProfessionalCard(
-                          professional: professional,
-                          onTap: () => _navigateToDetail(professional),
-                          isUnlocked: dataProvider.isProfessionalUnlocked(professional. id),
-                        ),
+                      // FIXED: Use FutureBuilder for async check
+                      return FutureBuilder<bool>(
+                        future: dataProvider.isProfessionalUnlocked(professional.id),
+                        initialData: false,
+                        builder: (context, snapshot) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: ProfessionalCard(
+                              professional: professional,
+                              onTap: () => _navigateToDetail(professional),
+                              isUnlocked: snapshot.data ?? false,
+                            ),
+                          );
+                        }
                       );
                     },
                   ),

@@ -39,6 +39,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final authProvider = context.read<AuthProvider>();
+      
+      // Attempt signup
       final success = await authProvider.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -46,15 +48,28 @@ class _SignupScreenState extends State<SignupScreen> {
         referralCode: _referralController.text.trim(),
       );
 
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created! Please verify your email.')),
-        );
-        AppRoutes.navigateAndReplace(context, AppRoutes.login);
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(authProvider.error ?? 'Signup failed')),
-        );
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Account created! Please verify your email.'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          // Navigate to Login after successful signup
+          AppRoutes.navigateAndReplace(context, AppRoutes.login);
+        } else {
+          // If signup fails (backend error), show the error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(authProvider.error ?? 'Signup failed. Please try again.'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          
+          // FOR TESTING ONLY: Uncomment below to force navigation even on failure
+          // AppRoutes.navigateAndReplace(context, AppRoutes.login);
+        }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -68,6 +83,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent, // Transparent for GradientBackground
       body: GradientBackground(
         child: SafeArea(
           child: Center(
@@ -79,15 +95,21 @@ class _SignupScreenState extends State<SignupScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Header
                     Text(
                       'Create Account',
-                      style: AppTextStyles.h2,
+                      style: AppTextStyles.h2.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Join WeList today',
-                      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.white.withOpacity(0.8),
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 48),
@@ -97,7 +119,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _nameController,
                       labelText: 'Full Name',
                       hintText: 'Enter your name',
-                      prefixIcon: const Icon(Icons.person_outline),
+                      prefixIcon: const Icon(Icons.person_outline, color: AppColors.white),
                       textInputAction: TextInputAction.next,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -113,7 +135,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _emailController,
                       labelText: 'Email',
                       hintText: 'Enter your email',
-                      prefixIcon: const Icon(Icons.email_outlined),
+                      prefixIcon: const Icon(Icons.email_outlined, color: AppColors.white),
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       validator: (value) {
@@ -133,11 +155,12 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _passwordController,
                       labelText: 'Password',
                       hintText: 'Create a password',
-                      prefixIcon: const Icon(Icons.lock_outline),
+                      prefixIcon: const Icon(Icons.lock_outline, color: AppColors.white),
                       obscureText: _obscurePassword,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          color: AppColors.white.withOpacity(0.7), // Fixed: using withOpacity instead of undefined color
                         ),
                         onPressed: () {
                           setState(() => _obscurePassword = !_obscurePassword);
@@ -161,7 +184,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _referralController,
                       labelText: 'Referral Code (Optional)',
                       hintText: 'Enter referral code',
-                      prefixIcon: const Icon(Icons.card_giftcard),
+                      prefixIcon: const Icon(Icons.card_giftcard, color: AppColors.white),
                       textInputAction: TextInputAction.done,
                       onSubmitted: (_) => _handleSignup(),
                     ),
@@ -181,15 +204,26 @@ class _SignupScreenState extends State<SignupScreen> {
                       children: [
                         Text(
                           'Already have an account? ',
-                          style: AppTextStyles.body,
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.white,
+                          ),
                         ),
                         GestureDetector(
                           onTap: () {
-                            AppRoutes.goBack(context);
+                            try {
+                              AppRoutes.goBack(context);
+                            } catch (e) {
+                              Navigator.pop(context);
+                            }
                           },
                           child: Text(
                             'Sign In',
-                            style: AppTextStyles.link,
+                            style: AppTextStyles.link.copyWith(
+                              color: AppColors.white,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                              decorationColor: AppColors.white,
+                            ),
                           ),
                         ),
                       ],

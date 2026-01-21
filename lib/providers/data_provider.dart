@@ -29,6 +29,7 @@ class DataProvider with ChangeNotifier {
   List<CategoryModel> _categories = [];
   List<ProfessionalModel> _professionals = [];
   List<ProfessionalModel> _unlockedProfessionals = [];
+  List<ProfessionalModel> _savedProfessionals = []; // Added missing field
   List<ShopModel> _shops = [];
   List<ItemModel> _items = [];
   List<ItemModel> _featuredItems = [];
@@ -45,7 +46,7 @@ class DataProvider with ChangeNotifier {
 
   // UI State
   bool _isLoading = false;
-  String?  _error;
+  String? _error;
   
   // AI Chat State
   List<ChatMessage> _chatMessages = [];
@@ -74,6 +75,7 @@ class DataProvider with ChangeNotifier {
   List<CategoryModel> get categories => _categories;
   List<ProfessionalModel> get professionals => _professionals;
   List<ProfessionalModel> get unlockedProfessionals => _unlockedProfessionals;
+  List<ProfessionalModel> get savedProfessionals => _savedProfessionals; // Added getter
   List<ShopModel> get shops => _shops;
   List<ItemModel> get items => _items;
   List<ItemModel> get featuredItems => _featuredItems;
@@ -82,7 +84,7 @@ class DataProvider with ChangeNotifier {
   List<MessageModel> get messages => _messages;
   int get unreadCount => _unreadCount;
   
-  ShopModel?  get myShop => _myShop;
+  ShopModel? get myShop => _myShop;
   // Alias for screens using shop
   ShopModel? get shop => _myShop;
   
@@ -114,7 +116,7 @@ class DataProvider with ChangeNotifier {
     _setLoading(true);
     try {
       _currentUser = await _db.getUser(userId);
-      if (_currentUser?. role == 'professional') {
+      if (_currentUser?.role == 'professional') {
         _currentProfessional = await _db.getProfessionalByUserId(userId);
         if (_currentProfessional != null) {
           await loadMyShop(_currentProfessional!.id);
@@ -153,7 +155,7 @@ class DataProvider with ChangeNotifier {
     try {
       final success = await _db.updateProfessional(_currentProfessional!.id, data);
       if (success) {
-        _currentProfessional = await _db.getProfessionalById(_currentProfessional!. id);
+        _currentProfessional = await _db.getProfessionalById(_currentProfessional!.id);
         notifyListeners();
       }
       return success;
@@ -224,10 +226,10 @@ class DataProvider with ChangeNotifier {
 
   Future<void> loadUnlockedProfessionals(String userId) async {
     try {
-      _unlockedProfessionals = await _db. getUnlockedProfessionals(userId);
+      _unlockedProfessionals = await _db.getUnlockedProfessionals(userId);
       notifyListeners();
     } catch (e) {
-      debugPrint('Provider Error loading unlocked:  $e');
+      debugPrint('Provider Error loading unlocked: $e');
     }
   }
 
@@ -292,7 +294,7 @@ class DataProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> createShop(Map<String, dynamic> data, File?  logoFile, File? coverFile) async {
+  Future<bool> createShop(Map<String, dynamic> data, File? logoFile, File? coverFile) async {
     _setLoading(true);
     try {
       if (logoFile != null) {
@@ -335,7 +337,7 @@ class DataProvider with ChangeNotifier {
       final success = await _db.updateShop(_myShop!.id, data);
       if (success) {
         if (_currentProfessional != null) {
-          _myShop = await _db.getShopByProfessionalId(_currentProfessional!. id);
+          _myShop = await _db.getShopByProfessionalId(_currentProfessional!.id);
         }
         notifyListeners();
       }
@@ -420,7 +422,7 @@ class DataProvider with ChangeNotifier {
   }
 
   // Create item with tags (used by item_editor_screen)
-  Future<ItemModel? > createItemWithTags(String professionalId, Map<String, dynamic> data) async {
+  Future<ItemModel?> createItemWithTags(String professionalId, Map<String, dynamic> data) async {
     _setLoading(true);
     try {
       final item = await _db.createItem(data);
@@ -448,10 +450,10 @@ class DataProvider with ChangeNotifier {
       }
       data['images'] = imageUrls;
 
-      final success = await _db. updateItem(itemId, data);
+      final success = await _db.updateItem(itemId, data);
       if (success) {
         if (_myShop != null) {
-          await loadMyItems(_myShop!. id);
+          await loadMyItems(_myShop!.id);
         }
       }
       return success;
@@ -516,7 +518,7 @@ class DataProvider with ChangeNotifier {
     try {
       final conversation = await _db.getOrCreateConversation(userId, professionalId);
       if (conversation != null) {
-        if (! _conversations.any((c) => c.id == conversation.id)) {
+        if (!_conversations.any((c) => c.id == conversation.id)) {
           _conversations.insert(0, conversation);
           notifyListeners();
         }
@@ -538,15 +540,14 @@ class DataProvider with ChangeNotifier {
       _messages = await _db.getMessages(conversationId);
       notifyListeners();
     } catch (e) {
-      debugPrint('Provider Error loading messages:  $e');
+      debugPrint('Provider Error loading messages: $e');
     }
   }
 
   // Subscribe to realtime messages
   void subscribeToMessages(String conversationId) {
-    _messagesSubscription?. cancel();
+    _messagesSubscription?.cancel();
     // Implementation depends on your realtime service
-    // This is a placeholder that should be connected to your RealtimeService
     debugPrint('Subscribed to messages for conversation: $conversationId');
   }
 
@@ -567,11 +568,11 @@ class DataProvider with ChangeNotifier {
     required String content,
   }) async {
     try {
-      final tempId = DateTime.now().millisecondsSinceEpoch. toString();
+      final tempId = DateTime.now().millisecondsSinceEpoch.toString();
       final tempMessage = MessageModel(
         id: tempId,
         conversationId: conversationId,
-        senderId:  senderId,
+        senderId: senderId,
         senderType: senderType,
         content: content,
         createdAt: DateTime.now(),
@@ -621,23 +622,23 @@ class DataProvider with ChangeNotifier {
         history: _chatMessages,
       );
 
-      if (response. success) {
+      if (response.success) {
         _chatMessages.add(ChatMessage(
           role: 'assistant',
           content: response.message,
         ));
 
         // If there's a search intent, search for professionals
-        if (response.hasSearchIntent && response.searchIntent?. category != null) {
+        if (response.hasSearchIntent && response.searchIntent?.category != null) {
           await searchProfessionals(
-            response.searchIntent!.query ??  message,
+            response.searchIntent!.query ?? message,
             city: city,
           );
         }
       } else {
-        _chatMessages. add(ChatMessage(
-          role:  'assistant',
-          content:  response.error ?? 'Sorry, I encountered an error. Please try again.',
+        _chatMessages.add(ChatMessage(
+          role: 'assistant',
+          content: response.error ?? 'Sorry, I encountered an error. Please try again.',
         ));
       }
     } catch (e) {
@@ -672,7 +673,7 @@ class DataProvider with ChangeNotifier {
     try {
       final success = await _db.createSubscription(
         odId: userId,
-        odType:  userType,
+        odType: userType,
         plan: plan,
         amount: amount,
         paymentId: paymentId,
@@ -684,7 +685,7 @@ class DataProvider with ChangeNotifier {
           await initUser(userId);
         } else {
           if (_currentProfessional != null) {
-             _currentProfessional = await _db.getProfessionalById(_currentProfessional!. id);
+             _currentProfessional = await _db.getProfessionalById(_currentProfessional!.id);
              notifyListeners();
           }
         }
@@ -732,7 +733,7 @@ class DataProvider with ChangeNotifier {
 
   Future<int> getUnreadCount(String userId, String userType) async {
     try {
-      final count = await _db.getUnreadNotificationCount(userId:  userId, userType: userType);
+      final count = await _db.getUnreadNotificationCount(userId: userId, userType: userType);
       _unreadCount = count;
       notifyListeners();
       return count;

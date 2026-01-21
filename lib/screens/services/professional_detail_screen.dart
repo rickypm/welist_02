@@ -25,11 +25,21 @@ class ProfessionalDetailScreen extends StatefulWidget {
 
 class _ProfessionalDetailScreenState extends State<ProfessionalDetailScreen> {
   bool _isUnlocking = false;
+  bool _isContactUnlocked = false; // FIXED: State variable for unlock status
 
   @override
   void initState() {
     super.initState();
     _trackView();
+    _checkUnlockStatus(); // Check status on init
+  }
+
+  Future<void> _checkUnlockStatus() async {
+    final dataProvider = context.read<DataProvider>();
+    final isUnlocked = await dataProvider.isProfessionalUnlocked(widget.professional.id);
+    if (mounted) {
+      setState(() => _isContactUnlocked = isUnlocked);
+    }
   }
 
   Future<void> _trackView() async {
@@ -54,6 +64,7 @@ class _ProfessionalDetailScreenState extends State<ProfessionalDetailScreen> {
 
         if (success) {
           await authProvider.refreshUser();
+          setState(() => _isContactUnlocked = true); // Update state immediately
         }
 
         return success;
@@ -73,7 +84,6 @@ class _ProfessionalDetailScreenState extends State<ProfessionalDetailScreen> {
           backgroundColor: AppColors.success,
         ),
       );
-      setState(() {});
     }
   }
 
@@ -103,10 +113,10 @@ class _ProfessionalDetailScreenState extends State<ProfessionalDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final dataProvider = context.watch<DataProvider>();
+    // final dataProvider = context.watch<DataProvider>(); // Not needed in build anymore
     final authProvider = context.watch<AuthProvider>();
     final professional = widget.professional;
-    final isUnlocked = dataProvider.isProfessionalUnlocked(professional.id);
+    // Removed sync call to async function
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -175,7 +185,7 @@ class _ProfessionalDetailScreenState extends State<ProfessionalDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isUnlocked == true
+                              _isContactUnlocked // FIXED: Use state variable
                                   ? professional.displayName
                                   :  professional.visibleName,
                               style: AppTextStyles.h2,
@@ -281,7 +291,7 @@ class _ProfessionalDetailScreenState extends State<ProfessionalDetailScreen> {
                             style:  const TextStyle(
                               fontSize: 13,
                               color: AppColors.textPrimary,
-                            ),
+                              ),
                           ),
                         );
                       }).toList(),
@@ -290,7 +300,7 @@ class _ProfessionalDetailScreenState extends State<ProfessionalDetailScreen> {
                   ],
 
                   // Unlock Info (if not unlocked)
-                  if (isUnlocked != true) ...[
+                  if (!_isContactUnlocked) ...[
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -350,7 +360,7 @@ class _ProfessionalDetailScreenState extends State<ProfessionalDetailScreen> {
                   ],
 
                   // Contact Details (if unlocked)
-                  if (isUnlocked == true) ...[
+                  if (_isContactUnlocked) ...[
                     Text('Contact Details', style: AppTextStyles.h3),
                     const SizedBox(height: 12),
                     _buildContactTile(
@@ -389,8 +399,8 @@ class _ProfessionalDetailScreenState extends State<ProfessionalDetailScreen> {
         child: SafeArea(
           child: SizedBox(
             height: 56,
-            child: isUnlocked == true ?
-                ? ElevatedButton. icon(
+            child: _isContactUnlocked // FIXED: Removed syntax error '? ?'
+                ? ElevatedButton.icon(
                     onPressed:  _startConversation,
                     icon: const Icon(Iconsax.message),
                     label: const Text('Start Conversation'),

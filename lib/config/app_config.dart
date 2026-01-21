@@ -89,7 +89,7 @@ class AppConfig {
   
   static const Map<String, String> userPlanNames = {
     'free': 'Free',
-    'basic':  'Basic',
+    'basic': 'Basic',
     'plus': 'Plus',
     'pro': 'Pro',
   };
@@ -103,7 +103,7 @@ class AppConfig {
   static const Map<String, String> partnerPlanNames = {
     'free': 'Free',
     'starter': 'Starter',
-    'business':  'Business',
+    'business': 'Business',
   };
   
   // ============================================================
@@ -151,6 +151,10 @@ class AppConfig {
   static const String termsOfServiceUrl = 'https://welist.app/terms';
   static const String websiteUrl = 'https://welist.app';
   
+  // Added missing constants required by MenuDrawer
+  static const String supportPhone = '+919876543210'; 
+  static const String appStoreUrl = 'https://play.google.com/store/apps/details?id=com.welist.app';
+
   // ============================================================
   // CITIES
   // ============================================================

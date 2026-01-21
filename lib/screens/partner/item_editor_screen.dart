@@ -60,8 +60,8 @@ class _ItemEditorScreenState extends State<ItemEditorScreen> {
       _descriptionController.text = item.description ??  '';
       _priceController. text = item.price?. toString() ?? '';
       _durationController.text = item. durationMinutes?. toString() ?? '';
-      _selectedPriceType = item.priceType;
-      _selectedCategoryId = item.categoryId;  // It's already String?, so this should work
+      _selectedPriceType = item.priceType ?? 'fixed'; // FIXED: Handle nullable String
+      _selectedCategoryId = item.categoryId;
       _tags = List.from(item.tags);
       _isActive = item.isActive;
       _isFeatured = item.isFeatured;

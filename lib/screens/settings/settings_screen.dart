@@ -30,7 +30,14 @@ class SettingsScreen extends StatelessWidget {
                 trailing: Switch(
                   value:  true,
                   onChanged: (value) {},
-                  activeColor: AppColors.primary,
+                  // FIXED: Replaced deprecated activeColor with thumbColor
+                  thumbColor: MaterialStateProperty.resolveWith<Color>((states) {
+                    if (states.contains(MaterialState.selected)) {
+                      return AppColors.primary;
+                    }
+                    return AppColors.white; // Or default
+                  }),
+                  activeTrackColor: AppColors.primary.withOpacity(0.5),
                 ),
               ),
               _SettingsTile(

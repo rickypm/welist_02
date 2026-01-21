@@ -11,12 +11,13 @@ class CategoryGrid extends StatelessWidget {
   const CategoryGrid({
     super.key,
     required this.categories,
-    required this. onCategoryTap,
+    required this.onCategoryTap,
     this.showAsShops = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // If no categories are loaded yet, show the default ones (Electrician, Plumber, etc.)
     if (categories.isEmpty) {
       return _buildDefaultCategories();
     }
@@ -25,12 +26,12 @@ class CategoryGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount:  4,
+        crossAxisCount: 4,
         crossAxisSpacing: 12,
-        mainAxisSpacing:  12,
-        childAspectRatio: 0.85,
+        mainAxisSpacing: 16, // Increased spacing for better layout
+        childAspectRatio: 0.8, // Taller aspect ratio to fit text better
       ),
-      itemCount: categories.length. clamp(0, 8),
+      itemCount: categories.length.clamp(0, 8),
       itemBuilder: (context, index) {
         final category = categories[index];
         return _CategoryCard(
@@ -43,24 +44,24 @@ class CategoryGrid extends StatelessWidget {
 
   Widget _buildDefaultCategories() {
     final defaultCategories = [
-      _DefaultCategory('Electrician', Iconsax.flash_1),
-      _DefaultCategory('Plumber', Iconsax.drop),
-      _DefaultCategory('Carpenter', Iconsax.ruler),
-      _DefaultCategory('Painter', Iconsax.brush_1),
-      _DefaultCategory('AC Repair', Iconsax. wind),
-      _DefaultCategory('Tutor', Iconsax.book),
-      _DefaultCategory('Cleaner', Iconsax.broom),
-      _DefaultCategory('More', Iconsax.more),
+      _DefaultCategory('Electrician', Icons.electrical_services, const Color(0xFFFFB800)),
+      _DefaultCategory('Plumber', Icons.plumbing, const Color(0xFF3B82F6)),
+      _DefaultCategory('Carpenter', Icons.handyman, const Color(0xFF8D6E63)),
+      _DefaultCategory('Painter', Icons.format_paint, const Color(0xFFE91E63)),
+      _DefaultCategory('Mechanic', Icons.car_repair, const Color(0xFFF44336)),
+      _DefaultCategory('Cleaning', Icons.cleaning_services, const Color(0xFF00BCD4)),
+      _DefaultCategory('Tutor', Icons.school, const Color(0xFF4CAF50)),
+      _DefaultCategory('Beauty', Icons.face_retouching_natural, const Color(0xFFE040FB)),
     ];
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate:  const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        crossAxisSpacing:  12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.85,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.8,
       ),
       itemCount: defaultCategories.length,
       itemBuilder: (context, index) {
@@ -68,10 +69,10 @@ class CategoryGrid extends StatelessWidget {
         return _DefaultCategoryCard(
           name: cat.name,
           icon: cat.icon,
+          color: cat.color,
           onTap: () {
-            // Create a dummy category for the callback
             final category = CategoryModel(
-              id: index. toString(),
+              id: index.toString(),
               name: cat.name,
               slug: cat.name.toLowerCase(),
               iconName: cat.name.toLowerCase(),
@@ -87,8 +88,9 @@ class CategoryGrid extends StatelessWidget {
 class _DefaultCategory {
   final String name;
   final IconData icon;
+  final Color color;
 
-  _DefaultCategory(this.name, this.icon);
+  _DefaultCategory(this.name, this.icon, this.color);
 }
 
 class _CategoryCard extends StatelessWidget {
@@ -102,138 +104,190 @@ class _CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Smart mapping: Determine icon and color based on category name/iconName
+    final iconData = _getSmartIcon(category.iconName, category.name);
+    final colorData = _getSmartColor(category.iconName, category.name);
+
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.surfaceLight,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Container(
+            width: 56, // Slightly larger touch target
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceNavy,
+              borderRadius: BorderRadius.circular(18), // Softer corners
+              border: Border.all(
+                color: AppColors.borderNavy,
+                width: 1,
               ),
-              child:  Icon(
-                _getCategoryIcon(category.iconName),
-                color: AppColors.primary,
-                size: 22,
-              ),
-            ),
-            const SizedBox(height:  8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(
-                category.name,
-                style: const TextStyle(
-                  fontSize:  11,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textPrimary,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              ],
+            ),
+            child: Center( // Ensure icon is perfectly centered
+              child: Icon(
+                iconData,
+                color: colorData,
+                size: 26,
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Text(
+              category.name,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+                height: 1.2,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  IconData _getCategoryIcon(String iconName) {
-    switch (iconName. toLowerCase()) {
-      case 'electrician':
-      case 'flash': 
-        return Iconsax. flash_1;
-      case 'plumber':
-      case 'drop':
-        return Iconsax.drop;
-      case 'carpenter':
-      case 'hammer':
-        return Iconsax.ruler;
-      case 'painter':
-      case 'brush':
-        return Iconsax.brush_1;
-      case 'ac': 
-      case 'wind':
-        return Iconsax.wind;
-      case 'tutor': 
-      case 'book':
-        return Iconsax.book;
-      case 'cleaner': 
-      case 'cleaning':
-        return Iconsax.broom;
-      case 'beauty':
-      case 'salon':
-        return Iconsax.scissor;
-      default:
-        return Iconsax.category;
-    }
+  // Helper to find the best icon based on name keywords
+  IconData _getSmartIcon(String? iconName, String name) {
+    final term = (iconName ?? name).toLowerCase();
+
+    // Construction & Home
+    if (term.contains('electric')) return Icons.electrical_services;
+    if (term.contains('plumb')) return Icons.plumbing;
+    if (term.contains('carpenter') || term.contains('wood')) return Icons.handyman;
+    if (term.contains('paint')) return Icons.format_paint;
+    if (term.contains('clean') || term.contains('maid')) return Icons.cleaning_services;
+    if (term.contains('pest') || term.contains('bug')) return Icons.bug_report;
+    if (term.contains('garden') || term.contains('lawn')) return Icons.grass;
+    
+    // Automotive
+    if (term.contains('mechanic') || term.contains('car') || term.contains('auto')) return Icons.car_repair;
+    if (term.contains('bike')) return Icons.two_wheeler;
+    
+    // Professional Services
+    if (term.contains('legal') || term.contains('law')) return Icons.gavel;
+    if (term.contains('medical') || term.contains('doctor') || term.contains('health')) return Icons.medical_services;
+    if (term.contains('tech') || term.contains('computer') || term.contains('it')) return Icons.computer;
+    if (term.contains('photo') || term.contains('camera')) return Icons.camera_alt;
+    if (term.contains('event') || term.contains('party') || term.contains('wedding')) return Icons.celebration;
+    if (term.contains('cater') || term.contains('food') || term.contains('cook')) return Icons.restaurant;
+    
+    // Education & Beauty
+    if (term.contains('tutor') || term.contains('teach') || term.contains('school')) return Icons.school;
+    if (term.contains('beauty') || term.contains('salon') || term.contains('hair')) return Icons.face_retouching_natural;
+    if (term.contains('makeup')) return Icons.brush;
+
+    // Default fallback
+    return Iconsax.category; 
+  }
+
+  // Helper to find the best color based on name keywords
+  Color _getSmartColor(String? iconName, String name) {
+    final term = (iconName ?? name).toLowerCase();
+
+    // Yellows/Oranges
+    if (term.contains('electric')) return const Color(0xFFFFB800);
+    if (term.contains('pest')) return const Color(0xFFFF9800);
+    if (term.contains('cater') || term.contains('food')) return const Color(0xFFFF5722);
+
+    // Blues
+    if (term.contains('plumb')) return const Color(0xFF3B82F6);
+    if (term.contains('clean')) return const Color(0xFF00BCD4);
+    if (term.contains('tech') || term.contains('it')) return const Color(0xFF2196F3);
+    if (term.contains('photo')) return const Color(0xFF03A9F4);
+
+    // Reds/Pinks
+    if (term.contains('paint')) return const Color(0xFFE91E63);
+    if (term.contains('beauty') || term.contains('salon')) return const Color(0xFFE040FB);
+    if (term.contains('mechanic') || term.contains('car')) return const Color(0xFFF44336);
+    if (term.contains('medical')) return const Color(0xFFEF5350);
+
+    // Greens
+    if (term.contains('tutor') || term.contains('school')) return const Color(0xFF4CAF50);
+    if (term.contains('garden')) return const Color(0xFF8BC34A);
+
+    // Purples/Others
+    if (term.contains('event')) return const Color(0xFF9C27B0);
+    if (term.contains('legal')) return const Color(0xFFD4AF37); // Gold
+    if (term.contains('carpenter')) return const Color(0xFF8D6E63); // Brown
+
+    // Default fallback
+    return AppColors.primary;
   }
 }
 
 class _DefaultCategoryCard extends StatelessWidget {
   final String name;
   final IconData icon;
+  final Color color;
   final VoidCallback onTap;
 
   const _DefaultCategoryCard({
     required this.name,
     required this.icon,
-    required this. onTap,
+    required this.color,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.surfaceLight,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment:  MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceNavy,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: AppColors.borderNavy,
+                width: 1,
               ),
-              child: Icon(
-                icon,
-                color: AppColors.primary,
-                size: 22,
-              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            const SizedBox(height:  8),
-            Text(
+            child: Center(
+              child: Icon(icon, color: color, size: 26),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Text(
               name,
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
+                color: AppColors.textSecondary,
+                height: 1.2,
               ),
               textAlign: TextAlign.center,
               maxLines: 2,
-              overflow: TextOverflow. ellipsis,
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

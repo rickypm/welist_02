@@ -1,4 +1,4 @@
-package com.welist.welist
+package com.example.welist
 
 import io.flutter.embedding.android.FlutterActivity
 

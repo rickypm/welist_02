@@ -69,6 +69,15 @@
 				<string>welist</string>
 			</array>
 		</dict>
+		<!-- Added Supabase Auth Callback Scheme -->
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>io.supabase.welist</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>
